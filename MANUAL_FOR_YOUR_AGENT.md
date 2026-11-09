@@ -36,7 +36,7 @@ possibly message text.
   stores, no iKnow API call, not even the §2.1 check.
 - **Only an explicit yes counts**: "yes", "sure" or "go ahead" in reply. Silence,
   a new question or "I think so" is not one: ask again or stop.
-- **On no, stop.** Offer iKnow in the browser (`python3 server.py`, then the
+- **On no, stop.** Offer iKnow in the browser (`uv run python server.py`, then the
   link it prints), which sends nothing off the machine, or this manual with a
   local model.
 - **Ask once per session**, and again if the owner changes model or provider.
@@ -129,7 +129,7 @@ collapsed into statements), `vocab.plabel` / `vocab.clabel` (decode codes),
 `__` for `/` (`graph/Artifacts__siri__remembers__view.db`); `sources/chat.db`,
 `sources/Calendar.sqlitedb` and `sources/Photos.sqlite` find the source stores.
 
-If the owner runs `python3 server.py`, each page's JSON is at
+If the owner runs `uv run python server.py`, each page's JSON is at
 `http://127.0.0.1:8765/api/<page>` (`overview`, `identity`, `person?id=`,
 `kinship`, `comms`, `calendar`, `social`, `faces`, `certainty`, `retractions`,
 `device`, `exposure`). Send the token from the link the server printed

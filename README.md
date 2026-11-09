@@ -62,10 +62,14 @@ Apple changes these stores between macOS releases, so on another version some
 pages may come out incomplete. On macOS 27 and later, not every page may work
 fully yet. When a page cannot read something, it says so under its title.
 
+This fork runs through [uv](https://docs.astral.sh/uv/); install it first if you
+do not have it.
+
 ```sh
-git clone https://github.com/8rank/iKnow.git
-cd iKnow
-python3 server.py
+git clone https://github.com/cristoslc/iKnow-fork.git
+cd iKnow-fork
+uv sync
+uv run python server.py
 ```
 
 Then open the link it prints. `ctrl-c` stops it.
@@ -108,8 +112,8 @@ time you run iKnow. The server reminds you when you stop it.
 ### Reading a copy instead
 
 ```sh
-python3 server.py --port 9000                    # another port
-python3 server.py --bundle /path/to/extracted    # an extracted copy, not this Mac
+uv run python server.py --port 9000                    # another port
+uv run python server.py --bundle /path/to/extracted    # an extracted copy, not this Mac
 ```
 
 ## Asking an agent
