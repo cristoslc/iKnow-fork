@@ -1,0 +1,14 @@
+[project]
+name = "iknow"
+version = "0.1.0"
+description = "See what your Mac knows about you: a local, read-only viewer for the macOS personal knowledge graph."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+dependencies = []
+
+[tool.uv]
+# Keep this project non-packaged: it runs from its checkout, never installed.
+# server.py resolves public/ and api/ relative to its own file, so an installed
+# copy would look for them inside site-packages.
+package = false
