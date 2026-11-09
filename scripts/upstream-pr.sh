@@ -4,6 +4,9 @@
 #
 # The fork carries uv tooling that upstream does not have. This script refuses to
 # copy a commit that would drag any of it across the boundary.
+#
+# Kept compatible with bash 3.2, the /bin/bash that ships with macOS: every array
+# expansion that may be empty is guarded with ${arr[@]+"${arr[@]}"}.
 set -euo pipefail
 
 UPSTREAM_REPO="8rank/iKnow"
@@ -11,8 +14,9 @@ FORK_OWNER="cristoslc"
 BASE_BRANCH="main"
 TRUNK="cristoslc/trunk"
 
-# Files that exist only in the fork: upstream runs with plain python3.
-FORK_ONLY_FILES=(pyproject.toml uv.lock)
+# Files that exist only in the fork: upstream runs with plain python3, has no uv
+# project, and needs neither our fork-workflow script nor our agent instructions.
+FORK_ONLY_FILES=(pyproject.toml uv.lock AGENTS.md scripts/upstream-pr.sh)
 # Files that exist in both, where fork-only uv wording can leak into a diff.
 WORDING_FILES=(README.md MANUAL_FOR_YOUR_AGENT.md .gitignore)
 WORDING_PATTERN='uv run|uv sync|uv\.lock|\.venv'
@@ -127,7 +131,7 @@ check_clean_tree() {
 
 check_commits_resolve() {
     local requested sha
-    for requested in "${COMMITS[@]}"; do
+    for requested in ${COMMITS[@]+"${COMMITS[@]}"}; do
         sha="$(git rev-parse --verify --quiet "${requested}^{commit}" || true)"
         [ -n "$sha" ] || die "commit does not resolve: $requested"
         RESOLVED+=("$sha")
@@ -157,7 +161,7 @@ check_one_commit() {
 
         for candidate in "${FORK_ONLY_FILES[@]}"; do
             if [ "$path" = "$candidate" ]; then
-                printf 'upstream-pr: %s touches fork-only file %s; upstream has no uv project\n' \
+                printf 'upstream-pr: %s touches fork-only file %s, absent upstream\n' \
                     "$(commit_label "$sha")" "$path" >&2
                 failed=1
             fi
@@ -181,7 +185,7 @@ check_one_commit() {
 
 check_commits_are_upstream_safe() {
     local sha failed=0
-    for sha in "${RESOLVED[@]}"; do
+    for sha in ${RESOLVED[@]+"${RESOLVED[@]}"}; do
         check_one_commit "$sha" || failed=1
     done
     if [ "$failed" -ne 0 ]; then
@@ -203,7 +207,7 @@ create_branch() {
 
 cherry_pick_commits() {
     local sha
-    for sha in "${RESOLVED[@]}"; do
+    for sha in ${RESOLVED[@]+"${RESOLVED[@]}"}; do
         if ! git cherry-pick -x "$sha"; then
             recover "cherry-pick failed for $(commit_label "$sha"); the branch is half-built"
         fi
