@@ -5,3 +5,4 @@ __pycache__/
 POSITION.md
 leakcheck.py
 todos.txt
+app/build/
