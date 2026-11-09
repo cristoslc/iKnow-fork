@@ -4,9 +4,10 @@
 
 ## Branches
 
-- `main` mirrors `upstream/main` exactly and only fast-forwards. Never commit on it.
-- `cristoslc/trunk` is the default branch and the personal integration branch: every fork change merges here.
-- Branches for upstream come from `scripts/upstream-pr.sh`, which copies chosen commits onto `origin/main` and refuses a commit that carries fork-only material.
+- `cristoslc/trunk` is the default branch and the personal integration branch: every fork change lands here first.
+- `main` mirrors `upstream/main` and only fast-forwards. Never commit on it.
+- Upstream-bound work travels on `upstream/<pr-slug>` branches. `scripts/upstream-pr.sh add <slug> <commit>...` cuts the branch from `main`, cherry-picks the chosen trunk commits, and refuses fork-only material. `scripts/upstream-pr.sh push <slug>` sends it to origin and opens the PR from `cristoslc:upstream/<slug>`.
+- `scripts/upstream-pr.sh sync` fast-forwards `main` once upstream merges or declines a PR, and reports which branches were left behind.
 
 ## Fork-only paths
 
@@ -20,9 +21,21 @@ Never let these into an upstream-bound commit:
 
 An upstream-bound commit keeps upstream's `python3 server.py` wording.
 
+The guard runs inside the script, so a hand-run `git push origin upstream/<pr-slug>` bypasses it and must not be done.
+
 ## Upstream contact
 
-Upstream has never received a pull request and documents issues as its only channel. Open an issue first and offer the branch in it, rather than opening a PR unannounced.
+Upstream has never received a pull request and documents issues as its only channel. Open an issue first and offer the change in it, rather than opening a PR unannounced. The PR comes from `cristoslc:upstream/<pr-slug>`.
+
+## Keeping main in step
+
+When upstream merges or declines a PR, fast-forward `main` and see which branches were left behind:
+
+```sh
+scripts/upstream-pr.sh sync
+```
+
+`sync` fast-forwards `main` to `upstream/main` and classifies every `upstream/<slug>` branch as merged (safe to delete), current, or stale. Pass `--rebuild <slug>` to re-apply a stale branch's still-pending commits on the new base; that force-pushes the branch with `--force-with-lease`. Nothing is pushed until the guard passes.
 
 ## Run
 
