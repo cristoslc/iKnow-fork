@@ -16,6 +16,7 @@ Never let these into an upstream-bound commit:
 - `uv.lock`
 - the `.venv/` line in `.gitignore`
 - the uv wording in `README.md` and `MANUAL_FOR_YOUR_AGENT.md`
+- `AGENTS.md` and `scripts/upstream-pr.sh`, which instruct agents about this fork and have no meaning upstream
 
 An upstream-bound commit keeps upstream's `python3 server.py` wording.
 
