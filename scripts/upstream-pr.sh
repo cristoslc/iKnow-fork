@@ -19,7 +19,7 @@ BRANCH_PREFIX="upstream"
 
 # Files that exist only in the fork: upstream runs with plain python3, has no uv
 # project, and needs neither our fork-workflow script nor our agent instructions.
-FORK_ONLY_FILES=(pyproject.toml uv.lock AGENTS.md scripts/upstream-pr.sh)
+FORK_ONLY_FILES=(pyproject.toml uv.lock AGENTS.md scripts/upstream-pr.sh app/ scripts/build-app.sh)
 WORDING_PATTERN='uv run|uv sync|uv\.lock|\.venv'
 
 COMMAND=""
@@ -326,9 +326,20 @@ local_branches_under_prefix() {
 is_fork_only() {
     local path="$1" candidate
     for candidate in "${FORK_ONLY_FILES[@]}"; do
-        if [ "$path" = "$candidate" ]; then
-            return 0
-        fi
+        case "$candidate" in
+            */)
+                # A trailing slash marks a whole directory: app/ covers app/main.swift
+                # and anything added there later.
+                case "$path" in
+                    "$candidate"*) return 0 ;;
+                esac
+                ;;
+            *)
+                if [ "$path" = "$candidate" ]; then
+                    return 0
+                fi
+                ;;
+        esac
     done
     return 1
 }
@@ -341,6 +352,26 @@ report_wording_hits() {
         printf '%s\n' "$added" | grep -E "$WORDING_PATTERN" >&2
         return 0
     fi
+    return 1
+}
+
+# Report added lines that name a fork-only directory (app/ and the like).
+# Returns 0 when it found a hit; the uv wording check stays separate.
+report_fork_dir_hits() {
+    local label="$1" path="$2" added="$3" candidate
+    [ -n "$added" ] || return 1
+    for candidate in "${FORK_ONLY_FILES[@]}"; do
+        case "$candidate" in
+            */)
+                if printf '%s\n' "$added" | grep -Fq "$candidate"; then
+                    printf 'upstream-pr: %s adds fork-only path %s to %s\n' \
+                        "$label" "$candidate" "$path" >&2
+                    printf '%s\n' "$added" | grep -F "$candidate" >&2
+                    return 0
+                fi
+                ;;
+        esac
+    done
     return 1
 }
 
@@ -361,6 +392,9 @@ guard_commit() {
         if report_wording_hits "$label" "$path" "$added"; then
             failed=1
         fi
+        if report_fork_dir_hits "$label" "$path" "$added"; then
+            failed=1
+        fi
     done < <(git show --format= --name-only "$sha")
     return "$failed"
 }
@@ -379,6 +413,9 @@ guard_range() {
         added="$(git diff --unified=0 "$range" -- "$path" \
             | grep '^+' | grep -v '^+++' || true)"
         if report_wording_hits "$label" "$path" "$added"; then
+            failed=1
+        fi
+        if report_fork_dir_hits "$label" "$path" "$added"; then
             failed=1
         fi
     done < <(git diff --name-only "$range")
